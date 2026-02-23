@@ -1,0 +1,297 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -848,
+        -496
+      ],
+      "id": "344bfc82-f425-4797-82eb-9df09834d2e4",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://aifeed.dev/feed.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -672,
+        -512
+      ],
+      "id": "c1f51c74-15fa-4344-84c6-7909a8fbbda4",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        -496,
+        -512
+      ],
+      "id": "4a3dc750-33b7-4e9d-b648-90edcd3ebc0d",
+      "name": "XML"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "rss.channel.item",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -304
+      ],
+      "id": "a24b4156-60c6-40eb-84f9-cd0495e0ce24",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are the Lead Content Strategist for the 'Open Mind Lab' YouTube channel. Your goal is to find viral AI automation news that we can turn into a video.\n\nAnalyze the following news item:\nTitle: {{ $json.title }}\nDescription: {{ $json.description }}\n\nPlease provide the following:\n1. Viral Potential: Rate from 1-10.\n2. Channel Fit: Does this match our focus on Agentic AI and n8n?\n3. Video Idea: A catchy, click-worthy YouTube title.\n4. The Hook: A 3-sentence script opening that grabs attention.\n\nFinal Decision: End your response with exactly 'ACTION: YES' if we should make a video, or 'ACTION: NO' if we should skip it.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -160,
+        -560
+      ],
+      "id": "ddda546c-b2f8-4074-8650-0c3039cbf421",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama3.1:8b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        -32
+      ],
+      "id": "29e67630-d078-4cdd-a308-34df22e48a97",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "Ic4sd63Bdb8c4IyJ",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.guid._ }}",
+        "tableName": "youtube_research"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        96,
+        0
+      ],
+      "id": "a3ca67f2-f747-44a4-9d94-b1a3fc367f56",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "yFKK2JWGJeCzy094",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "maxItems": 20
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        -544
+      ],
+      "id": "e47dfeca-ec3d-4087-a5ab-dd8f428f7f93",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fa45be9a-12ef-4689-927b-a9f5f6105b42",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "ACTION: YES",
+              "operator": {
+                "type": "array",
+                "operation": "contains",
+                "rightType": "any"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        128,
+        -560
+      ],
+      "id": "37a96ed6-d3cf-4355-a30c-d4e819bc0ff1",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "6207931750",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        302,
+        -480
+      ],
+      "id": "2454c26e-6e8c-4364-bf96-391a616dca85",
+      "name": "Send a text message",
+      "webhookId": "d458565a-f0e9-4ed4-b33a-2455e14cc553",
+      "credentials": {
+        "telegramApi": {
+          "id": "T6LAFRDrtmDvtrDg",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "XML": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "134eee27-501f-4c22-94bf-0c784d2dc237",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a1bc83de19c82314a48a6890ee267882400dbddf0a7d6e1033d571cd3aeb744"
+  },
+  "id": "BWBisYqpZrNzeHXi",
+  "tags": []
+}
